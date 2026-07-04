@@ -8,6 +8,7 @@ function CreateQuiz() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [totalQuestions, setTotalQuestions] = useState(1);
+  const [timeLimit, setTimeLimit] = useState("");
   const [loading, setLoading] = useState(false);
   const handleCreateQuiz = async (e) => {
     e.preventDefault();
@@ -20,7 +21,8 @@ function CreateQuiz() {
           {
             title,
             description,
-            total_questions:Number(totalQuestions)
+            total_questions:Number(totalQuestions),
+            time_limit: Number(timeLimit)
           },
           {
             headers: {
@@ -72,6 +74,8 @@ function CreateQuiz() {
           <input type="number" min="1" placeholder="Number of Questions" value={totalQuestions} onChange={(e) =>setTotalQuestions(e.target.value)}
               className=" w-full border rounded-lg p-3 " required
           />
+          <input type="number" placeholder="Time Limit (minutes)"  value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} className="w-full border rounded-lg p-3"
+  required/>
           <button
             type="submit"
             className="

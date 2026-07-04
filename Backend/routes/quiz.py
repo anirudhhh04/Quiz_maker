@@ -15,6 +15,7 @@ def create_quiz():
     title = data.get("title")
     description = data.get("description")
     total_questions = data["total_questions"]
+    time_limit = data.get("time_limit", 0)
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM users WHERE username=%s",(username,))
@@ -22,7 +23,7 @@ def create_quiz():
     if not user:
         return jsonify({"message": "User not found"}), 404
     user_id = user[0]
-    cursor.execute("""INSERT INTO quizzes(title,description,created_by,total_questions)VALUES( %s, %s, %s,%s)""",(title,description,user_id,total_questions))
+    cursor.execute("""INSERT INTO quizzes(title,description,created_by,total_questions,time_limit)VALUES( %s, %s, %s,%s,%s)""",(title,description,user_id,total_questions,time_limit))
     conn.commit()
     quiz_id = cursor.lastrowid  #fetching id of last row for adding next
     cursor.close()
@@ -64,7 +65,7 @@ def get_quizzes():
 def get_quiz(quiz_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("""SELECT q.id,q.question,q.option_a,q.option_b,q.option_c,q.option_d,qu.title,qu.description FROM questions q
+    cursor.execute("""SELECT q.id,q.question,q.option_a,q.option_b,q.option_c,q.option_d,qu.title,qu.description,qu.time_limit FROM questions q
             JOIN quizzes qu ON q.quiz_id = qu.id WHERE q.quiz_id = %s""", (quiz_id,))
     questions = cursor.fetchall()
     cursor.close()
@@ -107,7 +108,7 @@ def submit_quiz():
 def quiz_info(quiz_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute(""" SELECT  id, title, total_questions FROM quizzes WHERE id=%s """,(quiz_id,))
+    cursor.execute(""" SELECT  id, title, total_questions,time_limit FROM quizzes WHERE id=%s """,(quiz_id,))
     quiz = cursor.fetchone()
     cursor.close()
     conn.close()

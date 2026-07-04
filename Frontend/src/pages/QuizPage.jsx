@@ -12,6 +12,8 @@ function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [quizTitle, setQuizTitle] = useState("");
   const [quizDescription, setQuizDescription] = useState("");
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [submitted,setSubmitted]=useState(false);
   useEffect(() => {
     const fetchQuiz = async () => {
     try {
@@ -20,6 +22,7 @@ function QuizPage() {
       if (response.data.length > 0) {
           setQuizTitle(response.data[0].title);
           setQuizDescription(response.data[0].description);
+          setTimeLeft(response.data[0].time_limit * 60);
         }
     } catch (error) {
          console.log(error);
@@ -29,8 +32,25 @@ function QuizPage() {
     };
     fetchQuiz();
     }, [id]);
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    const timer = setTimeout(() => {
+        setTimeLeft((prev) => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+}, [timeLeft]);
+
+  useEffect(() => {
+      if (timeLeft === 0 && questions.length > 0) {
+        toast("Time's Up!,Submitting your quiz...");
+        submitQuiz();
+      }
+  }, [timeLeft]);
+
  const handleAnswer = (questionId,answer) => {setAnswers( {...answers,[questionId]: answer});};
  const submitQuiz = async () => {
+  if (submitted) return;
+  setSubmitted(true);
   try {
     const token = localStorage.getItem("token");
     const formattedAnswers = Object.keys(answers).map((questionId) => ({question_id: Number(questionId), answer:answers[questionId] }) );
@@ -51,8 +71,11 @@ function QuizPage() {
     n("/result",{state: response.data});
   } catch (error) {
     console.log(error);
+    setSubmitted(false);
   }
  };
+ const minutes = Math.floor(timeLeft / 60);
+ const seconds = timeLeft % 60;
  if (loading) {
 
   return (
@@ -72,8 +95,33 @@ return (
           <p className="text-gray-500 text-lg">  {quizDescription}</p>
 
       </div>
+      <div className={`
+              w-fit
+              ml-auto
+              mb-6
+              text-center
+              px-6
+              py-4
+              rounded-2xl
+              shadow-lg
+              font-bold
+              text-3xl
+              transition-all
+              duration-300
+              ${
+              timeLeft <= 60
+              ? "bg-red-600 text-white animate-pulse"
+              : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+              }
+              `}>
+        <p className="text-sm opacity-80">
+          Time Left
+        </p>
 
-      {questions.map((q) => (
+        {minutes}:{seconds.toString().padStart(2,"0")}
+
+    </div>
+    {questions.map((q) => (
 
         <div
           key={q.id}
@@ -134,6 +182,7 @@ return (
 
       <button
         onClick={submitQuiz}
+        disabled={submitted}
         className="
         w-full
         bg-green-600
@@ -144,7 +193,7 @@ return (
         hover:bg-green-700
         "
       >
-        Submit Quiz
+        {submitted ? "Submitting..." : "Submit Quiz"}
       </button>
 
     </div>
